@@ -242,10 +242,11 @@ local function pre_load(config)
     local load_version, err
     if type(mod.lversion) == "function" then
         load_version, err = mod:lversion()
-        if not load_version then
+        if err then
             return nil, err
         end
 
+        load_version = load_version or "0"
         if type(load_version) ~= "string" or #load_version < 1 then
             return nil, "load_version invalid"
         end
@@ -429,15 +430,15 @@ end
 function _M.install_code(skey)
     if not skey then
         local keys = load_dict:get_keys()
-        local srcipt_keys = {}
+        local script_keys = {}
 
         -- first set module
         for _, key in ipairs(keys) do
             local prefix, postfix = pre_post(key, ":")
             if prefix == "update" and postfix then
                 local pre = pre_post(postfix, "%.")
-                if pre == "srcipt" then
-                    tab_insert(srcipt_keys, key)
+                if pre == "script" then
+                    tab_insert(script_keys, key)
                 else
                     local ok, err = set_version(postfix)
                     if not ok and err ~= "code already loaded" then
@@ -448,7 +449,7 @@ function _M.install_code(skey)
         end
 
         -- then set script
-        for _, key in ipairs(srcipt_keys) do
+        for _, key in ipairs(script_keys) do
             local ok, err = set_version(key)
             if not ok and err ~= "code already loaded" then
                 return nil, err
